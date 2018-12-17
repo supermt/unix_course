@@ -1,4 +1,7 @@
 #include <fcntl.h>
+#include <pwd.h>//解析用户
+#include <grp.h>//解析用户组
+#include <time.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -36,25 +39,26 @@ void print_permission(struct stat statbuf){
 
   printf("\t");
 }
-void print_link(){
-
+void print_link_count(struct stat statbuf){
+    printf("%d\t",statbuf.st_nlink);
 }
-void print_user(){
-
+void print_user(struct stat statbuf){
+  int uid = statbuf.st_uid;//获取用户uid
+  struct passwd * current_user = getpwuid (uid);
+  printf("%s\t",current_user->pw_name );
 }
-void print_group(){
-
+void print_group(struct stat statbuf){
+  int gid = statbuf.st_gid;
+  struct group *data =  getgrgid(gid);
+  printf("%s\t",data->gr_name);
 }
-void print_size(){
-
+void print_size(struct stat statbuf){
+  printf("%lld\t", statbuf.st_size);
 }
-void print_modify_date(){
-
+void print_modify_date(struct stat statbuf){
+  struct tm * timeData = localtime(&statbuf.st_mtime);
+  printf("%d月 %d日 %d:%d %d\t",timeData->tm_mon+1,timeData->tm_mday,timeData->tm_hour,timeData->tm_min,timeData->tm_sec);
 }
-void print_name(){
-
-}
-
 
 void scan_dir(char * dir){
 	DIR * dp;
@@ -95,7 +99,12 @@ void scan_dir(char * dir){
       stat(entry->d_name,&statbuf);
       //获取目录文件之后，找到源文件后获取各类信息
       print_type(entry);//文件类型
-      print_permission(statbuf);
+      print_permission(statbuf);//文件权限
+      print_link_count(statbuf);//文件节点
+      print_user(statbuf);
+      print_group(statbuf);
+      print_size(statbuf);
+      print_modify_date(statbuf);
       puts(entry->d_name);
 		}
 		else return ;
